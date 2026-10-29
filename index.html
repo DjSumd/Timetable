@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Timetable</title>
+<meta name="theme-color" content="#2a2523">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4efe6; --paper:#fffdf8; --ink:#2a2523; --muted:#7a6f66; --line:#ddd3c4;
+  --oxblood:#6e1f24; --brass:#a8823a; --charcoal:#2a2523;
+  --c-mid:#a8823a; --c-sen:#6e1f24; --c-ens:#3d4a52; --c-form:#5f7154; --c-duty:#9a8f84; --c-meet:#7b5a7e; --c-other:#b9ad9f;
+  --tint-mid:#f6eedd; --tint-sen:#f5e4e2; --tint-ens:#e6eaec; --tint-form:#e8ede3; --tint-duty:#efebe6; --tint-meet:#efe6ef; --tint-other:#f3efe9;
+  --serif:"Cormorant Garamond",Georgia,serif; --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#1b1817; --paper:#252120; --ink:#efe7dc; --muted:#a69b90; --line:#3b3532;
+    --tint-mid:#352d20; --tint-sen:#3a2224; --tint-ens:#262d31; --tint-form:#2a3126; --tint-duty:#2f2b28; --tint-meet:#33283a; --tint-other:#2e2a27;
+    --c-mid:#c9a25a; --c-sen:#b9545b; --c-ens:#7d93a0; --c-form:#8fa582; --c-duty:#8a8077; --c-meet:#a985ad; --c-other:#8b8076;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* Top bar */
+.bar{position:sticky;top:0;z-index:20;background:var(--charcoal);color:#efe7dc;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.brand{font-family:var(--serif);font-size:22px;font-weight:600;letter-spacing:.02em;margin-right:4px}
+.brand b{color:#d1ad66;font-weight:600}
+.occ{flex:1 1 200px;min-width:0;display:flex;gap:6px;align-items:center}
+.occ select{flex:1;min-width:0;background:#3a3330;border:1px solid #4d4542;color:#efe7dc;border-radius:8px;padding:8px 10px}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.btn{background:#3a3330;border:1px solid #4d4542;color:#efe7dc;border-radius:8px;padding:8px 11px;font-size:13px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:#d1ad66}
+.btn.gold{background:#a8823a;border-color:#a8823a;color:#1b1817}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* Page */
+main{max-width:1280px;margin:0 auto;padding:18px 16px 60px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.titles{flex:1;min-width:220px}
+.titles input{display:block;width:100%;background:transparent;border:0;border-bottom:1px dashed transparent;padding:2px 0;outline:none}
+.titles input:focus,.titles input:hover{border-bottom-color:var(--line)}
+#ttTitle{font-family:var(--serif);font-size:32px;font-weight:600;color:var(--ink)}
+#ttSub{font-size:14px;color:var(--muted);margin-top:2px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+.views{display:none;gap:6px;margin:4px 0 12px}
+.views button{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 4px;font-weight:600;font-size:13px}
+.views button.on{background:var(--oxblood);color:#fff;border-color:var(--oxblood)}
+
+/* Grid */
+.gridwrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line);background:var(--paper)}
+table.tt{border-collapse:collapse;width:100%;min-width:860px;table-layout:fixed}
+.tt th,.tt td{border:1px solid var(--line);vertical-align:top}
+.tt thead th{background:var(--charcoal);color:#efe7dc;font-family:var(--serif);font-size:19px;font-weight:600;padding:8px 6px;border-color:#3a3330;cursor:pointer}
+.tt thead th:first-child{width:96px;cursor:default}
+.tt tbody th{width:96px;text-align:left;padding:8px;background:var(--bg);cursor:pointer}
+.tt tbody th .t{font-weight:600;font-size:14px}
+.tt tbody th .s{font-size:11px;color:var(--muted);font-weight:400}
+.tt tbody th:hover .t,.tt thead th:hover{color:var(--brass)}
+.tt tbody tr.gap th,.tt tbody tr.gap td{height:12px;padding:0}
+.tt td{padding:0;height:62px}
+.cell{display:block;width:100%;height:100%;min-height:58px;border:0;background:transparent;text-align:left;padding:6px 8px;border-left:4px solid transparent}
+.cell:hover{background:rgba(168,130,58,.08)}
+.cell.filled{border-left-color:var(--cat)}
+.cell .code{font-size:11px;font-weight:600;color:var(--cat);letter-spacing:.03em}
+.cell .name{font-weight:600;font-size:13.5px;line-height:1.25}
+.cell .meta{font-size:12px;color:var(--muted);font-style:italic}
+.cell .note{font-size:11px;color:var(--muted);margin-top:2px}
+.cell.empty .plus{opacity:0;color:var(--muted);font-size:18px}
+.cell.empty:hover .plus{opacity:.6}
+.cell.sel{outline:2px solid var(--brass);outline-offset:-2px}
+
+/* Day list */
+.daylist{display:none}
+.dayrow{display:flex;gap:10px;align-items:stretch;background:var(--paper);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;overflow:hidden}
+.dayrow .when{width:78px;flex:none;padding:9px 0 9px 10px;cursor:pointer}
+.dayrow .when .t{font-weight:600}
+.dayrow .when .s{font-size:11px;color:var(--muted)}
+.dayrow .cell{min-height:52px}
+.dayrow.gap{display:none}
+
+.foot{margin-top:14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* Modal */
+.scrim{position:fixed;inset:0;background:rgba(20,16,15,.55);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.scrim.open{display:flex}
+@media (min-width:640px){.scrim{align-items:center}}
+.sheet{background:var(--paper);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+@media (min-width:640px){.sheet{border-radius:16px}}
+.sheet h2{font-family:var(--serif);font-size:24px;font-weight:600;margin:0 0 2px}
+.sheet .where{color:var(--muted);font-size:13px;margin-bottom:14px}
+.f{display:block;margin-bottom:10px}
+.f span{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.f input,.f select,.f textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;outline:none}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--brass)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sbtn{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-weight:500;font-size:13px}
+.sbtn.primary{background:var(--oxblood);border-color:var(--oxblood);color:#fff;margin-left:auto}
+.sbtn.danger{color:var(--oxblood)}
+.sbtn:disabled{opacity:.4}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 10px}
+.chip{font-size:12px;padding:5px 9px;border-radius:999px;border:1px solid var(--line);background:var(--bg)}
+.list{margin:6px 0 0;padding:0;list-style:none}
+.list li{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.list li .nm{flex:1;min-width:0}
+.list li .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list li .nm small{color:var(--muted)}
+.list li.cur .nm b{color:var(--oxblood)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--charcoal);color:#efe7dc;padding:10px 16px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:60}
+.toast.show{opacity:1}
+
+@media (max-width:760px){
+  .views{display:flex}
+  body.mode-day .gridwrap{display:none}
+  body.mode-day .daylist{display:block}
+  #ttTitle{font-size:26px}
+  .brand{font-size:20px}
+  .bar .btn.opt{display:none}
+}
+
+/* Print: one landscape A4 page, always the full week */
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  :root{--bg:#fff;--paper:#fff;--ink:#111;--muted:#555;--line:#999;
+    --tint-mid:#fff;--tint-sen:#fff;--tint-ens:#fff;--tint-form:#fff;--tint-duty:#fff;--tint-meet:#fff;--tint-other:#fff;
+    --c-mid:#a8823a;--c-sen:#6e1f24;--c-ens:#3d4a52;--c-form:#5f7154;--c-duty:#8a8077;--c-meet:#7b5a7e;--c-other:#999}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;font-size:11px}
+  .bar,.views,.daylist,.foot .hint,.scrim,.toast,.cell .plus{display:none!important}
+  main{padding:0;max-width:none}
+  .gridwrap{display:block!important;border:0;overflow:visible}
+  table.tt{min-width:0}
+  .tt thead th{background:#2a2523!important;color:#fff!important;font-size:15px;padding:5px}
+  .tt tbody th{background:#f4efe6!important}
+  .tt td{height:auto}
+  .cell{min-height:40px;padding:4px 6px}
+  .cell .name{font-size:11.5px}
+  .titles input{border:0!important}
+  #ttSub:placeholder-shown,#saved{display:none!important}
+  #ttTitle{font-size:24px}
+}
+</style>
+</head>
+<body class="mode-day">
+
+<header class="bar">
+  <div class="brand">Time<b>table</b></div>
+  <div class="occ">
+    <select id="occSel" aria-label="Occasion"></select>
+    <button class="btn" id="occBtn" title="Manage occasions">Occasions</button>
+  </div>
+  <div class="tools">
+    <button class="btn gold" id="newBtn">+ New</button>
+    <button class="btn" id="undoBtn" disabled>Undo</button>
+    <button class="btn opt" id="printBtn">Print</button>
+    <button class="btn" id="moreBtn">More</button>
+  </div>
+</header>
+
+<main>
+  <div class="head">
+    <div class="titles">
+      <input id="ttTitle" aria-label="Title" placeholder="Title">
+      <input id="ttSub" aria-label="Subtitle" placeholder="Subtitle, dates or occasion details">
+    </div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="views" id="views">
+    <button data-v="week">Week</button>
+  </div>
+
+  <div class="gridwrap"><table class="tt" id="grid"></table></div>
+  <div class="daylist" id="daylist"></div>
+
+  <div class="foot">
+    <span class="hint">Tap any cell to fill it. Tap a time or a day heading to edit, insert or remove it.</span>
+    <span id="saved"></span>
+  </div>
+</main>
+
+<div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+
+<script>
+(function(){
+"use strict";
+const KEY = "timetable-app-v1";
+const CATS = {
+  auto:{label:"Auto"},
+  mid:{label:"Middle school"},
+  sen:{label:"Senior school"},
+  ens:{label:"Ensemble"},
+  form:{label:"Form"},
+  duty:{label:"Duty"},
+  meet:{label:"Meeting"},
+  other:{label:"Other"}
+};
+
+/* ---------- Seed: Dijon Summers Timetable 2026 ---------- */
+function c(code,name,room,n,cat){return {code:code||"",name:name||"",room:room||"",n:n||"",note:"",cat:cat||"auto"};}
+function seedVersion(){
+  const days=["Monday","Tuesday","Wednesday","Thursday","Friday"];
+  const rows=[
+    {t:"P0",s:"before school"},{t:"8:30",s:""},{t:"9:37",s:""},{t:"10:25",s:""},{t:"10:45",s:""},{t:"",s:"",gap:true},
+    {t:"11:35",s:""},{t:"12:30",s:""},{t:"1:00",s:""},{t:"1:25",s:""},{t:"1:55",s:""},{t:"",s:"",gap:true},{t:"AS",s:"after school"}
+  ];
+  const E=null;
+  const cells=[
+    [c("P0","Chamber Jazz Combo 3","M1.1","7"),c("P0","Junior Classical Guitars","M1.3"),c("P0","Junior String Orchestra","N1.1"),c("P0","Concert Band 2"),c("P0","Big Band 2","M1.3","15")],
+    [E,E,E,c("S1","9MUS_3","M1.2","21"),c("S1","10MUM_1","E1.2","12")],
+    [c("M2","8MUS_2","M1.2","20"),E,E,E,E],
+    [E,E,E,E,E],
+    [E,c("SSForm","10H3","R25","","form"),c("M3","8MUS_1","M1.2","20"),c("M3","8MUS_2","M1.2","20"),E],
+    [E,E,E,E,E],
+    [c("S3","9MUS_4","M1.2","18"),E,c("M4","7MUS_3","M1.2","19"),E,c("M4","7MUS_3","M1.2","19")],
+    [E,c("S4","9MUS_4","M1.2","18"),c("","MS Duty","Lower Oval","","duty"),E,c("","MS Duty","Rose Garden","","duty")],
+    [E,E,E,E,E],
+    [E,E,E,E,E],
+    [c("S5","10MUM_1","E1.2","12"),E,E,c("M6","8MUS_1","M1.2","20"),c("S5","9MUS_3","M1.3","21")],
+    [E,E,E,E,E],
+    [c("AS","PARTS Meeting","","","meet"),c("AS","Big Band 1","M1.3"),c("AS","Bandynanas","M1.3"),c("AS","Concert Band 1","M1.3"),E]
+  ];
+  return {id:uid(),name:"Standard week 2026",title:"Dijon Summers Timetable 2026",sub:"",days,rows,cells,updated:Date.now()};
+}
+
+/* ---------- State ---------- */
+let state=load();
+let undoStack=[];
+let dayIdx=defaultDay();
+let clip=null;
+
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){const s=JSON.parse(raw); if(s&&Array.isArray(s.versions)&&s.versions.length) return s;}
+  }catch(e){}
+  const v=seedVersion();
+  return {versions:[v],current:v.id};
+}
+function save(){
+  cur().updated=Date.now();
+  try{localStorage.setItem(KEY,JSON.stringify(state)); setSaved("Saved");}
+  catch(e){setSaved("Could not save on this device");}
+}
+function setSaved(t){const el=document.getElementById("saved"); el.textContent=t+" "+new Date().toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"});}
+function cur(){return state.versions.find(v=>v.id===state.current)||state.versions[0];}
+function snapshot(){undoStack.push(JSON.stringify(state)); if(undoStack.length>40) undoStack.shift(); updUndo();}
+function updUndo(){document.getElementById("undoBtn").disabled=!undoStack.length;}
+function change(fn){snapshot(); fn(); save(); render();}
+function defaultDay(){const d=new Date().getDay(); return (d>=1&&d<=5)?d-1:0;}
+
+/* ---------- Helpers ---------- */
+function catOf(cell){
+  if(!cell) return "other";
+  if(cell.cat&&cell.cat!=="auto") return cell.cat;
+  const code=(cell.code||"").toUpperCase(), nm=(cell.name||"").toLowerCase();
+  if(/duty/.test(nm)) return "duty";
+  if(/meeting/.test(nm)) return "meet";
+  if(/FORM/.test(code)) return "form";
+  if(/^(P0|AS)/.test(code)) return "ens";
+  if(/^M/.test(code)) return "mid";
+  if(/^S/.test(code)) return "sen";
+  return "other";
+}
+function isEmpty(cell){return !cell||!(cell.code||cell.name||cell.room||cell.n||cell.note);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));}
+function toast(t){const el=document.getElementById("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("show"),1800);}
+function cellHTML(cell){
+  if(isEmpty(cell)) return '<span class="plus">+</span>';
+  const meta=[cell.room,cell.n?"("+cell.n+")":""].filter(Boolean).join(" ");
+  return (cell.code?'<div class="code">'+esc(cell.code)+'</div>':"")+
+    '<div class="name">'+esc(cell.name)+'</div>'+
+    (meta?'<div class="meta">'+esc(meta)+'</div>':"")+
+    (cell.note?'<div class="note">'+esc(cell.note)+'</div>':"");
+}
+function cellBtn(r,d){
+  const v=cur(), cell=v.cells[r][d], k=catOf(cell), empty=isEmpty(cell);
+  const style=empty?"":' style="--cat:var(--c-'+k+');background:var(--tint-'+k+')"';
+  const where=v.days[d]+", "+(v.rows[r].t||"row "+(r+1));
+  return '<button class="cell '+(empty?"empty":"filled")+'" data-r="'+r+'" data-d="'+d+'"'+style+' aria-label="'+esc(where)+'">'+cellHTML(cell)+'</button>';
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const v=cur();
+  // occasions
+  const sel=document.getElementById("occSel");
+  sel.innerHTML=state.versions.map(x=>'<option value="'+x.id+'"'+(x.id===v.id?" selected":"")+'>'+esc(x.name)+'</option>').join("");
+  // titles
+  const ti=document.getElementById("ttTitle"), su=document.getElementById("ttSub");
+  if(document.activeElement!==ti) ti.value=v.title||"";
+  if(document.activeElement!==su) su.value=v.sub||"";
+  document.title=(v.title||"Timetable");
+  // legend: only categories in use
+  const used=new Set();
+  v.cells.forEach(row=>row.forEach(cl=>{if(!isEmpty(cl)) used.add(catOf(cl));}));
+  document.getElementById("legend").innerHTML=["mid","sen","ens","form","duty","meet","other"].filter(k=>used.has(k))
+    .map(k=>'<span><i style="background:var(--c-'+k+')"></i>'+CATS[k].label+'</span>').join("");
+  // grid
+  let h='<thead><tr><th></th>'+v.days.map((d,i)=>'<th data-day="'+i+'">'+esc(d)+'</th>').join("")+'</tr></thead><tbody>';
+  v.rows.forEach((row,r)=>{
+    const gap=row.gap&&!row.t&&v.cells[r].every(isEmpty);
+    h+='<tr class="'+(gap?"gap":"")+'"><th data-row="'+r+'">'+(gap?"":'<div class="t">'+esc(row.t||"")+'</div><div class="s">'+esc(row.s||"")+'</div>')+'</th>';
+    v.days.forEach((_,d)=>{h+='<td>'+(gap?'<button class="cell empty" data-r="'+r+'" data-d="'+d+'" style="min-height:12px;height:12px" aria-label="Spacer"></button>':cellBtn(r,d))+'</td>';});
+    h+='</tr>';
+  });
+  document.getElementById("grid").innerHTML=h+'</tbody>';
+  // day tabs
+  if(dayIdx>=v.days.length) dayIdx=0;
+  document.getElementById("views").innerHTML=v.days.map((d,i)=>'<button data-v="'+i+'" class="'+(document.body.classList.contains("mode-day")&&i===dayIdx?"on":"")+'">'+esc(d.slice(0,3))+'</button>').join("")+
+    '<button data-v="week" class="'+(document.body.classList.contains("mode-week")?"on":"")+'">Week</button>';
+  // day list
+  let dl="";
+  v.rows.forEach((row,r)=>{
+    const gap=row.gap&&!row.t&&v.cells[r].every(isEmpty);
+    dl+='<div class="dayrow'+(gap?" gap":"")+'"><div class="when" data-row="'+r+'"><div class="t">'+esc(row.t||"")+'</div><div class="s">'+esc(row.s||"")+'</div></div>'+cellBtn(r,dayIdx)+'</div>';
+  });
+  document.getElementById("daylist").innerHTML=dl;
+}
+
+/* ---------- Sheets (modals) ---------- */
+const scrim=document.getElementById("scrim"), sheet=document.getElementById("sheet");
+function openSheet(html,onBind){sheet.innerHTML=html; scrim.classList.add("open"); onBind&&onBind(sheet); const f=sheet.querySelector("[autofocus]"); if(f&&matchMedia("(min-width:640px)").matches) f.focus();}
+function closeSheet(){scrim.classList.remove("open"); sheet.innerHTML=""; document.querySelectorAll(".cell.sel").forEach(e=>e.classList.remove("sel"));}
+scrim.addEventListener("click",e=>{if(e.target===scrim) closeSheet();});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&scrim.classList.contains("open")) closeSheet();
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!scrim.classList.contains("open")&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault(); undo();}
+});
+
+function editCell(r,d){
+  const v=cur(), cell=v.cells[r][d]||c();
+  const where=esc(v.days[d])+" &middot; "+esc(v.rows[r].t||"Row "+(r+1))+(v.rows[r].s?" "+esc(v.rows[r].s):"");
+  const opts=Object.keys(CATS).map(k=>'<option value="'+k+'"'+((cell.cat||"auto")===k?" selected":"")+'>'+CATS[k].label+'</option>').join("");
+  openSheet(
+    '<h2>'+(isEmpty(cell)?"Add":"Edit")+'</h2><div class="where">'+where+'</div>'+
+    '<div class="two"><label class="f"><span>Period code</span><input id="fCode" value="'+esc(cell.code)+'" placeholder="M3, S1, P0, AS"></label>'+
+    '<label class="f"><span>Colour</span><select id="fCat">'+opts+'</select></label></div>'+
+    '<label class="f"><span>Class or activity</span><input id="fName" value="'+esc(cell.name)+'" placeholder="8MUS_1, Big Band 2" autofocus></label>'+
+    '<div class="two"><label class="f"><span>Room or location</span><input id="fRoom" value="'+esc(cell.room)+'" placeholder="M1.2"></label>'+
+    '<label class="f"><span>Students</span><input id="fN" value="'+esc(cell.n)+'" inputmode="numeric" placeholder="20"></label></div>'+
+    '<label class="f"><span>Note</span><input id="fNote" value="'+esc(cell.note)+'" placeholder="Optional, e.g. relief, excursion, rehearsal in PAC"></label>'+
+    '<div class="row-btns">'+
+      '<button class="sbtn" id="bCopy"'+(isEmpty(cell)?" disabled":"")+'>Copy</button>'+
+      '<button class="sbtn" id="bPaste"'+(clip?"":" disabled")+'>Paste</button>'+
+      '<button class="sbtn danger" id="bClear"'+(isEmpty(cell)?" disabled":"")+'>Clear</button>'+
+      '<button class="sbtn primary" id="bSave">Save</button>'+
+    '</div>'+
+    '<div class="row-btns"><button class="sbtn" id="bAll">Save to every day in this row</button></div>',
+    s=>{
+      const val=()=>({code:s.querySelector("#fCode").value.trim(),name:s.querySelector("#fName").value.trim(),room:s.querySelector("#fRoom").value.trim(),n:s.querySelector("#fN").value.trim(),note:s.querySelector("#fNote").value.trim(),cat:s.querySelector("#fCat").value});
+      s.querySelector("#bSave").onclick=()=>{const nv=val(); change(()=>{v.cells[r][d]=isEmpty(nv)?null:nv;}); closeSheet();};
+      s.querySelector("#bAll").onclick=()=>{const nv=val(); change(()=>{v.days.forEach((_,i)=>v.cells[r][i]=isEmpty(nv)?null:{...nv});}); closeSheet(); toast("Filled the whole row");};
+      s.querySelector("#bClear").onclick=()=>{change(()=>{v.cells[r][d]=null;}); closeSheet();};
+      s.querySelector("#bCopy").onclick=()=>{clip={...cell}; toast("Copied"); closeSheet();};
+      s.querySelector("#bPaste").onclick=()=>{if(!clip) return; change(()=>{v.cells[r][d]={...clip};}); closeSheet();};
+      s.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault(); s.querySelector("#bSave").click();}}));
+    });
+}
+
+function editRow(r){
+  const v=cur(), row=v.rows[r];
+  openSheet(
+    '<h2>Time slot</h2><div class="where">Row '+(r+1)+' of '+v.rows.length+'</div>'+
+    '<div class="two"><label class="f"><span>Time or label</span><input id="rT" value="'+esc(row.t)+'" placeholder="10:45, P0, AS" autofocus></label>'+
+    '<label class="f"><span>Small note</span><input id="rS" value="'+esc(row.s)+'" placeholder="before school"></label></div>'+
+    '<div class="row-btns">'+
+      '<button class="sbtn" id="rUp"'+(r===0?" disabled":"")+'>Move up</button>'+
+      '<button class="sbtn" id="rDown"'+(r===v.rows.length-1?" disabled":"")+'>Move down</button>'+
+      '<button class="sbtn primary" id="rSave">Save</button>'+
+    '</div><div class="row-btns">'+
+      '<button class="sbtn" id="rAbove">Insert row above</button>'+
+      '<button class="sbtn" id="rBelow">Insert row below</button>'+
+      '<button class="sbtn" id="rEmpty">Clear row</button>'+
+      '<button class="sbtn danger" id="rDel"'+(v.rows.length<2?" disabled":"")+'>Delete row</button>'+
+    '</div>',
+    s=>{
+      const blank=()=>v.days.map(()=>null);
+      s.querySelector("#rSave").onclick=()=>{const t=s.querySelector("#rT").value.trim(), sb=s.querySelector("#rS").value.trim(); change(()=>{v.rows[r]={t,s:sb,gap:!t&&!sb}}); closeSheet();};
+      s.querySelector("#rAbove").onclick=()=>{change(()=>{v.rows.splice(r,0,{t:"",s:""}); v.cells.splice(r,0,blank());}); closeSheet(); editRow(r);};
+      s.querySelector("#rBelow").onclick=()=>{change(()=>{v.rows.splice(r+1,0,{t:"",s:""}); v.cells.splice(r+1,0,blank());}); closeSheet(); editRow(r+1);};
+      s.querySelector("#rEmpty").onclick=()=>{change(()=>{v.cells[r]=blank();}); closeSheet();};
+      s.querySelector("#rDel").onclick=()=>{change(()=>{v.rows.splice(r,1); v.cells.splice(r,1);}); closeSheet(); toast("Row deleted. Undo is up top.");};
+      const mv=(dir)=>{const j=r+dir; change(()=>{[v.rows[r],v.rows[j]]=[v.rows[j],v.rows[r]]; [v.cells[r],v.cells[j]]=[v.cells[j],v.cells[r]];}); closeSheet(); editRow(j);};
+      s.querySelector("#rUp").onclick=()=>mv(-1);
+      s.querySelector("#rDown").onclick=()=>mv(1);
+      s.querySelectorAll("input").forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault(); s.querySelector("#rSave").click();}}));
+    });
+}
+
+function editDay(d){
+  const v=cur();
+  openSheet(
+    '<h2>Day column</h2><div class="where">Rename for an occasion, e.g. "Mon 3 Nov" or "Camp day 1"</div>'+
+    '<label class="f"><span>Heading</span><input id="dN" value="'+esc(v.days[d])+'" autofocus></label>'+
+    '<div class="row-btns">'+
+      '<button class="sbtn" id="dL"'+(d===0?" disabled":"")+'>Move left</button>'+
+      '<button class="sbtn" id="dR"'+(d===v.days.length-1?" disabled":"")+'>Move right</button>'+
+      '<button class="sbtn primary" id="dSave">Save</button>'+
+    '</div><div class="row-btns">'+
+      '<button class="sbtn" id="dAdd">Add column after</button>'+
+      '<button class="sbtn" id="dClr">Clear column</button>'+
+      '<button class="sbtn danger" id="dDel"'+(v.days.length<2?" disabled":"")+'>Delete column</button>'+
+    '</div>',
+    s=>{
+      s.querySelector("#dSave").onclick=()=>{const n=s.querySelector("#dN").value.trim()||v.days[d]; change(()=>{v.days[d]=n;}); closeSheet();};
+      s.querySelector("#dAdd").onclick=()=>{change(()=>{v.days.splice(d+1,0,"New day"); v.cells.forEach(row=>row.splice(d+1,0,null));}); closeSheet(); editDay(d+1);};
+      s.querySelector("#dClr").onclick=()=>{change(()=>{v.cells.forEach(row=>row[d]=null);}); closeSheet();};
+      s.querySelector("#dDel").onclick=()=>{change(()=>{v.days.splice(d,1); v.cells.forEach(row=>row.splice(d,1)); if(dayIdx>=v.days.length) dayIdx=v.days.length-1;}); closeSheet(); toast("Column deleted. Undo is up top.");};
+      const mv=(dir)=>{const j=d+dir; change(()=>{[v.days[d],v.days[j]]=[v.days[j],v.days[d]]; v.cells.forEach(row=>{[row[d],row[j]]=[row[j],row[d]];});}); closeSheet();};
+      s.querySelector("#dL").onclick=()=>mv(-1);
+      s.querySelector("#dR").onclick=()=>mv(1);
+      s.querySelector("#dN").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault(); s.querySelector("#dSave").click();}});
+    });
+}
+
+function newOccasion(){
+  const v=cur();
+  openSheet(
+    '<h2>New occasion</h2><div class="where">Exam week, camp, relief, Term 1 2027, concert week</div>'+
+    '<label class="f"><span>Name</span><input id="nN" placeholder="e.g. Exam week T4 2026" autofocus></label>'+
+    '<label class="f"><span>Start from</span><select id="nFrom">'+
+      '<option value="dup">A copy of "'+esc(v.name)+'"</option>'+
+      '<option value="blank">Same times and days, all cells empty</option>'+
+      '<option value="keep">Same times, keep only before and after school</option>'+
+      '<option value="seed">The original 2026 timetable</option>'+
+    '</select></label>'+
+    '<div class="row-btns"><button class="sbtn" id="nCancel">Cancel</button><button class="sbtn primary" id="nGo">Create</button></div>',
+    s=>{
+      s.querySelector("#nCancel").onclick=closeSheet;
+      s.querySelector("#nGo").onclick=()=>{
+        const name=s.querySelector("#nN").value.trim()||"Untitled occasion", from=s.querySelector("#nFrom").value;
+        let nv;
+        if(from==="seed"){nv=seedVersion();}
+        else{
+          nv=JSON.parse(JSON.stringify(v)); nv.id=uid();
+          if(from==="blank") nv.cells=nv.cells.map(row=>row.map(()=>null));
+          if(from==="keep") nv.cells=nv.cells.map((row,r)=>/^(P0|AS)$/i.test(nv.rows[r].t||"")?row:row.map(()=>null));
+        }
+        nv.name=name; nv.sub=from==="dup"?(v.sub||""):""; nv.updated=Date.now();
+        change(()=>{state.versions.push(nv); state.current=nv.id;});
+        closeSheet(); toast("Created "+name);
+      };
+      s.querySelector("#nN").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault(); s.querySelector("#nGo").click();}});
+    });
+}
+
+function manageOccasions(){
+  const fmt=t=>new Date(t).toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"});
+  openSheet(
+    '<h2>Occasions</h2><div class="where">'+state.versions.length+' saved on this device</div>'+
+    '<ul class="list">'+state.versions.map(x=>
+      '<li class="'+(x.id===state.current?"cur":"")+'"><div class="nm"><b>'+esc(x.name)+'</b><small>Edited '+fmt(x.updated||Date.now())+'</small></div>'+
+      '<button class="sbtn" data-open="'+x.id+'">Open</button>'+
+      '<button class="sbtn" data-ren="'+x.id+'">Rename</button>'+
+      '<button class="sbtn" data-dup="'+x.id+'">Copy</button>'+
+      '<button class="sbtn danger" data-del="'+x.id+'"'+(state.versions.length<2?" disabled":"")+'>Delete</button></li>').join("")+
+    '</ul><div class="row-btns"><button class="sbtn primary" id="oDone">Done</button></div>',
+    s=>{
+      s.querySelector("#oDone").onclick=closeSheet;
+      s.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{state.current=b.dataset.open; save(); render(); closeSheet();});
+      s.querySelectorAll("[data-ren]").forEach(b=>b.onclick=()=>{
+        const x=state.versions.find(y=>y.id===b.dataset.ren); const n=prompt("Rename occasion",x.name);
+        if(n&&n.trim()){change(()=>{x.name=n.trim();}); manageOccasions();}
+      });
+      s.querySelectorAll("[data-dup]").forEach(b=>b.onclick=()=>{
+        const x=state.versions.find(y=>y.id===b.dataset.dup); const nv=JSON.parse(JSON.stringify(x)); nv.id=uid(); nv.name=x.name+" (copy)";
+        change(()=>{state.versions.push(nv);}); manageOccasions();
+      });
+      s.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+        const x=state.versions.find(y=>y.id===b.dataset.del);
+        if(!confirm('Delete "'+x.name+'"? You can undo straight after.')) return;
+        change(()=>{state.versions=state.versions.filter(y=>y.id!==x.id); if(state.current===x.id) state.current=state.versions[0].id;});
+        manageOccasions();
+      });
+    });
+}
+
+function moreMenu(){
+  openSheet(
+    '<h2>More</h2><div class="where">Backups move occasions between your phone and laptop</div>'+
+    '<div class="row-btns" style="margin-top:0">'+
+      '<button class="sbtn" id="mPrint">Print or save as PDF</button>'+
+      '<button class="sbtn" id="mExp">Back up all occasions</button>'+
+      '<button class="sbtn" id="mExp1">Export this occasion</button>'+
+      '<button class="sbtn" id="mImp">Import a backup</button>'+
+      '<button class="sbtn" id="mCsv">Export as CSV</button>'+
+    '</div>'+
+    '<div class="row-btns"><button class="sbtn primary" id="mDone">Done</button></div>',
+    s=>{
+      s.querySelector("#mDone").onclick=closeSheet;
+      s.querySelector("#mPrint").onclick=()=>{closeSheet(); setTimeout(()=>window.print(),150);};
+      s.querySelector("#mExp").onclick=()=>{download("timetable-backup-"+stamp()+".json",JSON.stringify({app:"timetable",versions:state.versions},null,1),"application/json"); closeSheet();};
+      s.querySelector("#mExp1").onclick=()=>{const v=cur(); download(slug(v.name)+".json",JSON.stringify({app:"timetable",versions:[v]},null,1),"application/json"); closeSheet();};
+      s.querySelector("#mImp").onclick=()=>{closeSheet(); document.getElementById("importFile").click();};
+      s.querySelector("#mCsv").onclick=()=>{download(slug(cur().name)+".csv",toCSV(cur()),"text/csv"); closeSheet();};
+    });
+}
+
+function stamp(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function slug(s){return (s||"timetable").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"timetable";}
+function download(name,text,type){const b=new Blob([text],{type}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},500);}
+function toCSV(v){
+  const q=s=>'"'+String(s||"").replace(/"/g,'""')+'"';
+  const lines=[["Time","Note"].concat(v.days).map(q).join(",")];
+  v.rows.forEach((row,r)=>{
+    lines.push([row.t,row.s].concat(v.days.map((_,d)=>{const cl=v.cells[r][d]; if(isEmpty(cl)) return ""; return [cl.code?cl.code+"-":"",cl.name,cl.room,cl.n?"("+cl.n+")":"",cl.note?"["+cl.note+"]":""].filter(Boolean).join(" ");})).map(q).join(","));
+  });
+  return lines.join("\r\n");
+}
+document.getElementById("importFile").addEventListener("change",e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result); const list=Array.isArray(data.versions)?data.versions:[];
+      const ok=list.filter(x=>x&&Array.isArray(x.days)&&Array.isArray(x.rows)&&Array.isArray(x.cells));
+      if(!ok.length) throw new Error("none");
+      change(()=>{ok.forEach(x=>{const exists=state.versions.some(y=>y.id===x.id); if(exists) x.id=uid(); state.versions.push(x);}); state.current=ok[ok.length-1].id;});
+      toast("Imported "+ok.length+" occasion"+(ok.length>1?"s":""));
+    }catch(err){toast("That file is not a timetable backup");}
+    e.target.value="";
+  };
+  rd.readAsText(f);
+});
+
+function undo(){
+  if(!undoStack.length) return;
+  try{state=JSON.parse(undoStack.pop()); try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} render(); toast("Undone");}catch(e){}
+  updUndo();
+}
+
+/* ---------- Wiring ---------- */
+document.addEventListener("click",e=>{
+  const cellEl=e.target.closest(".cell");
+  if(cellEl&&!scrim.contains(cellEl)){
+    const r=+cellEl.dataset.r, d=+cellEl.dataset.d;
+    const v=cur(); if(v.rows[r].gap&&!v.rows[r].t&&v.cells[r].every(isEmpty)){editRow(r); return;}
+    cellEl.classList.add("sel"); editCell(r,d); return;
+  }
+  const rowEl=e.target.closest("[data-row]"); if(rowEl){editRow(+rowEl.dataset.row); return;}
+  const dayEl=e.target.closest("[data-day]"); if(dayEl){editDay(+dayEl.dataset.day); return;}
+  const vEl=e.target.closest("#views button");
+  if(vEl){
+    if(vEl.dataset.v==="week"){document.body.classList.remove("mode-day"); document.body.classList.add("mode-week");}
+    else{dayIdx=+vEl.dataset.v; document.body.classList.remove("mode-week"); document.body.classList.add("mode-day");}
+    render();
+  }
+});
+document.getElementById("occSel").addEventListener("change",e=>{state.current=e.target.value; save(); render();});
+document.getElementById("occBtn").onclick=manageOccasions;
+document.getElementById("newBtn").onclick=newOccasion;
+document.getElementById("undoBtn").onclick=undo;
+document.getElementById("printBtn").onclick=()=>window.print();
+document.getElementById("moreBtn").onclick=moreMenu;
+let titleTimer;
+["ttTitle","ttSub"].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener("focus",()=>snapshot());
+  el.addEventListener("input",()=>{const v=cur(); if(id==="ttTitle") v.title=el.value; else v.sub=el.value; clearTimeout(titleTimer); titleTimer=setTimeout(save,300);});
+  el.addEventListener("keydown",e=>{if(e.key==="Enter") el.blur();});
+});
+
+render();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+})();
+</script>
+</body>
+</html>
